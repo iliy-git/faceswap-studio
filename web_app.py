@@ -790,9 +790,8 @@ async def index():
     return FileResponse(index_file, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 
-@app.get("/api/gpu_info")
-async def get_gpu_info():
-    """Возвращает информацию о текущем GPU-ускорителе для динамического бейджа в интерфейсе."""
+def _detect_gpu_info():
+    """Синхронно определяет GPU один раз при старте сервера для мгновенного ответа."""
     gpu_name = "CPU / Не обнаружен"
     vram = ""
     has_cuda = False
@@ -831,13 +830,22 @@ async def get_gpu_info():
         tech = "CPU"
 
     badge_text = f"{gpu_name} ({vram}) • {tech}" if vram else f"{gpu_name} • {tech}"
-    return JSONResponse({
+    return {
         "gpu_name": gpu_name,
         "vram": vram,
         "technology": tech,
         "badge_text": badge_text,
         "is_gpu_active": bool(has_cuda or ("GeForce" in gpu_name or "RTX" in gpu_name or "NVIDIA" in gpu_name))
-    })
+    }
+
+# Предварительно кэшируем статус GPU один раз при импорте/запуске
+CACHED_GPU_INFO = _detect_gpu_info()
+
+
+@app.get("/api/gpu_info")
+async def get_gpu_info():
+    """Возвращает информацию о текущем GPU-ускорителе мгновенно из кэша (0 мс)."""
+    return JSONResponse(CACHED_GPU_INFO)
 
 
 @app.post("/api/start_render")

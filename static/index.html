@@ -33,7 +33,7 @@
       </div>
       <div class="gpu-badge" id="gpu-badge" title="Активный графический ускоритель">
         <span class="status-dot" id="gpu-status-dot"></span>
-        <span class="gpu-text" id="gpu-badge-text">Определение GPU...</span>
+        <span class="gpu-text" id="gpu-badge-text">NVIDIA GPU • CUDA / Tensor Cores</span>
       </div>
     </header>
 
@@ -44,13 +44,13 @@
 
     <!-- Main Workspace Card -->
     <div class="studio-card">
-      <!-- Upload Slots: Photo & Video -->
-      <section class="upload-grid" id="upload-section">
-        <!-- Slot 1: Photo -->
+      <!-- Upload Section: Face Input -->
+      <section class="upload-grid single-slot" id="upload-section">
+        <!-- Slot: Photo / Face Scan -->
         <div class="upload-slot" id="photo-slot">
           <div class="slot-header">
-            <span class="slot-number">1</span>
-            <span class="slot-label">Фото лица донора</span>
+            <span class="slot-label">Лицо для замены</span>
+            <span class="slot-badge-system">⚡ Системное видео (задано)</span>
           </div>
 
           <div class="dropzone" id="photo-dropzone">
@@ -133,29 +133,6 @@
             <span class="webcam-text">Сделать Face ID скан (веб-камера)</span>
             <span class="webcam-badge">Face ID</span>
           </button>
-        </div>
-
-        <!-- Slot 2: System Video (Preset / Auto) -->
-        <div class="upload-slot system-video-slot" id="video-slot">
-          <div class="slot-header">
-            <span class="slot-number">2</span>
-            <span class="slot-label">Целевое видео</span>
-            <span class="slot-badge-system">⚡ Системное (задано)</span>
-          </div>
-
-          <div class="system-video-card" id="system-video-card">
-            <div class="system-video-preview">
-              <video id="video-preview-el" src="/static/preset_v.mp4" autoplay muted loop playsinline></video>
-              <div class="system-video-overlay">
-                <span class="system-tag"><span class="pulse-dot"></span> Видео шаблона активно</span>
-                <span class="system-filename">preset_v.mp4</span>
-              </div>
-            </div>
-            <div class="system-video-info">
-              <span class="info-title">Загрузка видео отключена</span>
-              <span class="info-desc">Видео подставляется автоматически из системы. Загрузите только фото или сделайте скан лица.</span>
-            </div>
-          </div>
         </div>
       </section>
 

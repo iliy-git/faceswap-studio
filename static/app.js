@@ -16,15 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const multiClearBtn = document.getElementById('multi-clear-btn');
   const btnOpenWebcam = document.getElementById('btn-open-webcam');
 
-  // Elements: Video slot
-  const videoDropzone = document.getElementById('video-dropzone');
-  const videoInput = document.getElementById('video-input');
-  const videoEmpty = document.getElementById('video-empty');
-  const videoPreviewWrap = document.getElementById('video-preview-wrap');
-  const videoPreviewEl = document.getElementById('video-preview-el');
-  const videoName = document.getElementById('video-name');
-  const videoClearBtn = document.getElementById('video-clear-btn');
-
   // Elements: Actions & Sections
   const uploadSection = document.getElementById('upload-section');
   const settingsSection = document.getElementById('settings-section');
@@ -36,6 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const gpuBadgeText = document.getElementById('gpu-badge-text');
   const gpuBadge = document.getElementById('gpu-badge');
 
+  // 1. Мгновенное отображение из кэша браузера (0 мс)
+  const cachedGpu = localStorage.getItem('faceswap_cached_gpu');
+  if (cachedGpu && gpuBadgeText) {
+    gpuBadgeText.textContent = cachedGpu;
+  }
+
+  // 2. Быстрое фоновое обновление с сервера (<1 мс)
   async function fetchGpuInfo() {
     try {
       const res = await fetch('/api/gpu_info');
@@ -43,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json();
         if (gpuBadgeText && data.badge_text) {
           gpuBadgeText.textContent = data.badge_text;
+          localStorage.setItem('faceswap_cached_gpu', data.badge_text);
         }
         if (gpuBadge) {
           if (data.is_gpu_active) {
@@ -285,62 +284,9 @@ document.addEventListener('DOMContentLoaded', () => {
     clearAllPhotos();
   });
 
-  // 2. Video Slot Logic (System Preset Video)
-  if (videoDropzone && videoInput) {
-    videoDropzone.addEventListener('click', (e) => {
-      if (e.target.closest('#video-clear-btn')) return;
-      videoInput.click();
-    });
-
-    videoInput.addEventListener('change', () => {
-      if (videoInput.files && videoInput.files[0]) {
-        handleVideoSelected(videoInput.files[0]);
-      }
-    });
-
-    setupDragAndDrop(videoDropzone, (files) => {
-      const vid = files.find(f => f.type.startsWith('video/') || /\.(mp4|mov|webm|mkv)$/i.test(f.name));
-      if (vid) {
-        handleVideoSelected(vid);
-      } else {
-        alert('Пожалуйста, выберите видеофайл (MP4, MOV, WEBM).');
-      }
-    });
-  }
-
-  function handleVideoSelected(file) {
-    selectedVideoFile = file;
-    if (videoName) videoName.textContent = `${file.name} (${formatFileSize(file.size)})`;
-    const objectUrl = URL.createObjectURL(file);
-    if (videoPreviewEl) {
-      videoPreviewEl.src = objectUrl;
-      videoPreviewEl.load();
-    }
-    if (videoEmpty) videoEmpty.classList.add('hidden');
-    if (videoPreviewWrap) videoPreviewWrap.classList.remove('hidden');
-    if (videoDropzone) videoDropzone.classList.add('has-file');
-    updateGenerateButtonState();
-  }
-
-  if (videoClearBtn) {
-    videoClearBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      selectedVideoFile = null;
-      if (videoInput) videoInput.value = '';
-      if (videoPreviewEl) {
-        videoPreviewEl.pause();
-        videoPreviewEl.removeAttribute('src');
-        videoPreviewEl.load();
-      }
-      if (videoPreviewWrap) videoPreviewWrap.classList.add('hidden');
-      if (videoEmpty) videoEmpty.classList.remove('hidden');
-      if (videoDropzone) videoDropzone.classList.remove('has-file');
-      updateGenerateButtonState();
-    });
-  }
-
-  // 3. Helper: Drag & Drop setup
+  // Helper: Drag & Drop setup
   function setupDragAndDrop(dropzoneEl, onFilesDrop) {
+    if (!dropzoneEl) return;
     dropzoneEl.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropzoneEl.classList.add('dragover');
@@ -360,20 +306,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function formatFileSize(bytes) {
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' КБ';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' МБ';
-  }
-
   function updateGenerateButtonState() {
     const hasPhoto = selectedPhotoFiles && selectedPhotoFiles.length > 0;
     btnGenerate.disabled = !hasPhoto;
 
     if (hasPhoto) {
-      actionNote.textContent = '✓ Лицо готово! Нажмите кнопку выше для запуска генерации видео';
+      actionNote.textContent = '✓ Лицо готово! Нажмите «Сгенерировать»';
       actionNote.style.color = '#38bdf8';
     } else {
-      actionNote.textContent = 'Загрузите фото лица или сделайте 3D Face ID скан (веб-камера)';
+      actionNote.textContent = 'Загрузите фото лица или сделайте Face ID скан (веб-камера)';
       actionNote.style.color = '';
     }
   }

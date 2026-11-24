@@ -353,51 +353,59 @@ document.addEventListener('DOMContentLoaded', () => {
     clearAllPhotos();
   });
 
-  // 2. Video Slot Logic
-  videoDropzone.addEventListener('click', (e) => {
-    if (e.target.closest('#video-clear-btn')) return;
-    videoInput.click();
-  });
+  // 2. Video Slot Logic (System Preset Video)
+  if (videoDropzone && videoInput) {
+    videoDropzone.addEventListener('click', (e) => {
+      if (e.target.closest('#video-clear-btn')) return;
+      videoInput.click();
+    });
 
-  videoInput.addEventListener('change', () => {
-    if (videoInput.files && videoInput.files[0]) {
-      handleVideoSelected(videoInput.files[0]);
-    }
-  });
+    videoInput.addEventListener('change', () => {
+      if (videoInput.files && videoInput.files[0]) {
+        handleVideoSelected(videoInput.files[0]);
+      }
+    });
 
-  setupDragAndDrop(videoDropzone, (files) => {
-    const vid = files.find(f => f.type.startsWith('video/') || /\.(mp4|mov|webm|mkv)$/i.test(f.name));
-    if (vid) {
-      handleVideoSelected(vid);
-    } else {
-      alert('Пожалуйста, выберите видеофайл (MP4, MOV, WEBM).');
-    }
-  });
+    setupDragAndDrop(videoDropzone, (files) => {
+      const vid = files.find(f => f.type.startsWith('video/') || /\.(mp4|mov|webm|mkv)$/i.test(f.name));
+      if (vid) {
+        handleVideoSelected(vid);
+      } else {
+        alert('Пожалуйста, выберите видеофайл (MP4, MOV, WEBM).');
+      }
+    });
+  }
 
   function handleVideoSelected(file) {
     selectedVideoFile = file;
-    videoName.textContent = `${file.name} (${formatFileSize(file.size)})`;
+    if (videoName) videoName.textContent = `${file.name} (${formatFileSize(file.size)})`;
     const objectUrl = URL.createObjectURL(file);
-    videoPreviewEl.src = objectUrl;
-    videoPreviewEl.load();
-    videoEmpty.classList.add('hidden');
-    videoPreviewWrap.classList.remove('hidden');
-    videoDropzone.classList.add('has-file');
+    if (videoPreviewEl) {
+      videoPreviewEl.src = objectUrl;
+      videoPreviewEl.load();
+    }
+    if (videoEmpty) videoEmpty.classList.add('hidden');
+    if (videoPreviewWrap) videoPreviewWrap.classList.remove('hidden');
+    if (videoDropzone) videoDropzone.classList.add('has-file');
     updateGenerateButtonState();
   }
 
-  videoClearBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    selectedVideoFile = null;
-    videoInput.value = '';
-    videoPreviewEl.pause();
-    videoPreviewEl.removeAttribute('src');
-    videoPreviewEl.load();
-    videoPreviewWrap.classList.add('hidden');
-    videoEmpty.classList.remove('hidden');
-    videoDropzone.classList.remove('has-file');
-    updateGenerateButtonState();
-  });
+  if (videoClearBtn) {
+    videoClearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectedVideoFile = null;
+      if (videoInput) videoInput.value = '';
+      if (videoPreviewEl) {
+        videoPreviewEl.pause();
+        videoPreviewEl.removeAttribute('src');
+        videoPreviewEl.load();
+      }
+      if (videoPreviewWrap) videoPreviewWrap.classList.add('hidden');
+      if (videoEmpty) videoEmpty.classList.remove('hidden');
+      if (videoDropzone) videoDropzone.classList.remove('has-file');
+      updateGenerateButtonState();
+    });
+  }
 
   // 3. Helper: Drag & Drop setup
   function setupDragAndDrop(dropzoneEl, onFilesDrop) {
@@ -427,21 +435,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateGenerateButtonState() {
     const hasPhoto = selectedPhotoFiles && selectedPhotoFiles.length > 0;
-    const hasVideo = Boolean(selectedVideoFile);
-    const ready = hasPhoto && hasVideo;
-    btnGenerate.disabled = !ready;
+    btnGenerate.disabled = !hasPhoto;
 
-    if (ready) {
-      actionNote.textContent = 'Всё готово! Нажмите кнопку выше для запуска генерации';
+    if (hasPhoto) {
+      actionNote.textContent = '✓ Лицо готово! Нажмите кнопку выше для запуска генерации видео';
       actionNote.style.color = '#38bdf8';
-    } else if (!hasPhoto && !hasVideo) {
-      actionNote.textContent = 'Выберите фото (или сделайте 3D-скан) и видео, чтобы запустить генерацию';
-      actionNote.style.color = '';
-    } else if (!hasPhoto) {
-      actionNote.textContent = 'Осталось предоставить фото лица или сделать 3D-скан';
-      actionNote.style.color = '';
     } else {
-      actionNote.textContent = 'Осталось загрузить целевое видео';
+      actionNote.textContent = 'Загрузите фото лица или сделайте 3D Face ID скан (веб-камера)';
       actionNote.style.color = '';
     }
   }
@@ -992,7 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================================================================
 
   btnGenerate.addEventListener('click', async () => {
-    if (!selectedPhotoFiles || selectedPhotoFiles.length === 0 || !selectedVideoFile) return;
+    if (!selectedPhotoFiles || selectedPhotoFiles.length === 0) return;
 
     btnGenerate.disabled = true;
     actionSection.classList.add('hidden');
@@ -1029,7 +1029,9 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('donor_photos', file, file.name);
       });
 
-      formData.append('custom_video', selectedVideoFile);
+      if (selectedVideoFile) {
+        formData.append('custom_video', selectedVideoFile);
+      }
 
       const resp = await fetch('/api/start_render', {
         method: 'POST',

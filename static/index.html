@@ -135,35 +135,25 @@
           </button>
         </div>
 
-        <!-- Slot 2: Video -->
-        <div class="upload-slot" id="video-slot">
+        <!-- Slot 2: System Video (Preset / Auto) -->
+        <div class="upload-slot system-video-slot" id="video-slot">
           <div class="slot-header">
             <span class="slot-number">2</span>
             <span class="slot-label">Целевое видео</span>
+            <span class="slot-badge-system">⚡ Системное (задано)</span>
           </div>
 
-          <div class="dropzone" id="video-dropzone">
-            <input type="file" id="video-input" accept="video/mp4,video/quicktime,video/webm" hidden>
-            
-            <!-- Empty state -->
-            <div class="dropzone-empty" id="video-empty">
-              <div class="icon-wrap">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                </svg>
+          <div class="system-video-card" id="system-video-card">
+            <div class="system-video-preview">
+              <video id="video-preview-el" src="/static/preset_v.mp4" autoplay muted loop playsinline></video>
+              <div class="system-video-overlay">
+                <span class="system-tag"><span class="pulse-dot"></span> Видео шаблона активно</span>
+                <span class="system-filename">preset_v.mp4</span>
               </div>
-              <p class="dropzone-title">Перетащите <span>видео</span></p>
-              <p class="dropzone-hint">или нажмите для выбора (MP4, MOV)</p>
             </div>
-
-            <!-- Preview state -->
-            <div class="dropzone-preview hidden" id="video-preview-wrap">
-              <video id="video-preview-el" muted loop playsinline></video>
-              <div class="file-overlay">
-                <span class="file-name" id="video-name">video.mp4</span>
-                <button type="button" class="btn-clear" id="video-clear-btn" title="Удалить видео">✕</button>
-              </div>
+            <div class="system-video-info">
+              <span class="info-title">Загрузка видео отключена</span>
+              <span class="info-desc">Видео подставляется автоматически из системы. Загрузите только фото или сделайте скан лица.</span>
             </div>
           </div>
         </div>

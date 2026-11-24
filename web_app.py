@@ -831,7 +831,7 @@ async def start_render(
     if not donor_paths:
         raise HTTPException(status_code=400, detail="Загрузите фото лица.")
 
-    # 2. Целевое видео
+    # 2. Целевое видео (системное видео по умолчанию)
     if custom_video and custom_video.filename:
         video_path = str(job_dir / f"target_{custom_video.filename}")
         with open(video_path, "wb") as buffer:
@@ -840,6 +840,12 @@ async def start_render(
         video_path = str(PRESETS_DIR / "v.mp4")
         if not os.path.exists(video_path):
             video_path = str(STATIC_DIR / "preset_v.mp4")
+        if not os.path.exists(video_path):
+            mp4s = list(STATIC_DIR.glob("*.mp4"))
+            if mp4s:
+                video_path = str(mp4s[0])
+            else:
+                raise HTTPException(status_code=400, detail="Системное видео не найдено на сервере (v.mp4 / preset_v.mp4).")
 
     # Флаги ускорения и отключения этапов нейросети
     b_codeformer = str(enable_codeformer).lower() in ("true", "1", "yes", "on")

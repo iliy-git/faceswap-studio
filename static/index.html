@@ -7,8 +7,8 @@
   <meta name="description" content="Минималистичный сервис для нейросетевой замены лиц на видео высокой чёткости с естественным сохранением причёски.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/style.css?v=2.4">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=2.5">
 </head>
 <body>
   <!-- Ambient background glow effects -->
@@ -39,7 +39,7 @@
 
     <!-- Subtitle / Instruction -->
     <div class="hero-desc">
-      <p>Сделайте скан лица через веб-камеру или загрузите фото, затем нажмите «Сгенерировать»</p>
+      <p>Загрузите фото лица или сделайте снимок с камеры, затем нажмите «Сгенерировать видео»</p>
     </div>
 
     <!-- Main Workspace Card -->
@@ -49,8 +49,8 @@
         <!-- Slot: Photo / Face Scan -->
         <div class="upload-slot" id="photo-slot">
           <div class="slot-header">
-            <span class="slot-label">Лицо для замены</span>
-            <span class="slot-badge-system">⚡ Системное видео (задано)</span>
+            <span class="slot-label">Фото лица</span>
+            <span class="slot-badge-system">⚡ Шаблон видео готов</span>
           </div>
 
           <div class="dropzone" id="photo-dropzone">
@@ -64,8 +64,8 @@
                   <circle cx="12" cy="7" r="4"></circle>
                 </svg>
               </div>
-              <p class="dropzone-title">Перетащите <span>фото лица</span></p>
-              <p class="dropzone-hint">или нажмите для выбора одного или нескольких фото</p>
+              <p class="dropzone-title">Перетащите <span>фото лица</span> сюда</p>
+              <p class="dropzone-hint">или нажмите для выбора файла (JPG, PNG)</p>
             </div>
 
             <!-- Single Photo Preview state -->
@@ -93,17 +93,17 @@
                   </svg>
                 </div>
                 <div class="faceid-card-meta">
-                  <div class="faceid-card-title">✓ Face ID 3D-слепок настроен</div>
-                  <div class="faceid-card-subtitle">Круговой объёмный профиль лица (360°) • ArcFace 3D-Fusion</div>
+                  <div class="faceid-card-title">✓ Снимок лица готов</div>
+                  <div class="faceid-card-subtitle">Лицо зафиксировано для генерации видео</div>
                 </div>
-                <div class="faceid-card-badge">90%+ сходство</div>
+                <div class="faceid-card-badge">Готово</div>
               </div>
 
               <!-- Multi-Photo Grid (when photos uploaded manually) -->
               <div class="multi-grid-wrap" id="multi-grid-wrap">
                 <div class="multi-grid-header">
-                  <span class="multi-badge-live">3D Face Scan</span>
-                  <span class="multi-grid-count" id="multi-grid-count">6 ракурсов</span>
+                  <span class="multi-badge-live">Снимок лица</span>
+                  <span class="multi-grid-count" id="multi-grid-count">6 кадров</span>
                 </div>
                 <div class="multi-grid" id="multi-grid">
                   <!-- thumbnails will be injected here -->
@@ -111,14 +111,14 @@
               </div>
 
               <div class="file-overlay">
-                <span class="file-name" id="multi-photo-name">Объёмный 3D-слепок</span>
-                <button type="button" class="btn-clear" id="multi-clear-btn" title="Удалить скан">✕</button>
+                <span class="file-name" id="multi-photo-name">Снимок лица</span>
+                <button type="button" class="btn-clear" id="multi-clear-btn" title="Удалить снимок">✕</button>
               </div>
             </div>
           </div>
 
-          <!-- Face ID 3D Scan Button Trigger -->
-          <button type="button" class="btn-webcam-trigger" id="btn-open-webcam" title="Настроить Face ID: круговой скан лица для максимального сходства">
+          <!-- Camera Scan Button Trigger -->
+          <button type="button" class="btn-webcam-trigger" id="btn-open-webcam" title="Сделать снимок лица с помощью веб-камеры">
             <span class="webcam-icon-glow">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M7 3H5a2 2 0 0 0-2 2v2"></path>
@@ -130,8 +130,8 @@
                 <path d="M9 15c1 1.5 5 1.5 6 0"></path>
               </svg>
             </span>
-            <span class="webcam-text">Сделать Face ID скан (веб-камера)</span>
-            <span class="webcam-badge">Face ID</span>
+            <span class="webcam-text">Сделать снимок с камеры</span>
+            <span class="webcam-badge">Камера</span>
           </button>
         </div>
       </section>
@@ -141,9 +141,9 @@
         <button type="button" class="btn-generate" id="btn-generate" disabled>
           <span class="btn-glow"></span>
           <span class="btn-icon">⚡</span>
-          <span class="btn-text">Сгенерировать</span>
+          <span class="btn-text">Сгенерировать видео</span>
         </button>
-        <p class="action-note" id="action-note">Загрузите фото лица или сделайте скан лица (веб-камера)</p>
+        <p class="action-note" id="action-note">Выберите фото лица, чтобы запустить генерацию</p>
       </section>
 
       <!-- Processing State -->
@@ -152,7 +152,7 @@
           <div class="progress-top">
             <div class="progress-status-box">
               <div class="pulse-spinner"></div>
-              <span class="progress-status-text" id="progress-status-text">Инициализация нейросетей...</span>
+              <span class="progress-status-text" id="progress-status-text">Обработка видео...</span>
             </div>
             <span class="progress-percent" id="progress-percent">0%</span>
           </div>
@@ -177,7 +177,7 @@
           </div>
 
           <div class="progress-actions">
-            <button type="button" class="btn-cancel-render" id="btn-cancel-render">✕ Отменить генерацию / Сбросить</button>
+            <button type="button" class="btn-cancel-render" id="btn-cancel-render">✕ Отменить генерацию</button>
           </div>
         </div>
       </section>
@@ -186,7 +186,7 @@
       <section class="result-section hidden" id="result-section">
         <div class="result-card">
           <div class="result-badge">
-            <span class="check-icon">✓</span> Видео успешно сгенерировано!
+            <span class="check-icon">✓</span> Видео готово!
           </div>
 
           <div class="result-player-wrapper">
@@ -200,15 +200,15 @@
                 <polyline points="7 10 12 15 17 10"></polyline>
                 <line x1="12" y1="15" x2="12" y2="3"></line>
               </svg>
-              <span id="btn-download-text">Скачать результат (MP4)</span>
+              <span id="btn-download-text">Скачать видео (MP4)</span>
             </button>
 
             <a href="#" target="_blank" class="btn-open-tab" id="btn-open-tab" title="Открыть видео в отдельной вкладке">
-              <span>↗ Открыть видео в отдельной вкладке</span>
+              <span>↗ Открыть в новой вкладке</span>
             </a>
             
             <button type="button" class="btn-reset" id="btn-reset">
-              ↺ Обработать другое видео
+              ↺ Создать ещё одно видео
             </button>
           </div>
         </div>
@@ -233,8 +233,8 @@
             </svg>
           </div>
           <div>
-            <h3 class="modal-title">Face ID 3D</h3>
-            <p class="modal-subtitle">Круговое биометрическое сканирование лица</p>
+            <h3 class="modal-title">Снимок лица</h3>
+            <p class="modal-subtitle">Используйте камеру для съёмки лица</p>
           </div>
         </div>
         <button type="button" class="modal-close-btn" id="modal-close-btn" title="Закрыть">✕</button>
@@ -243,10 +243,10 @@
       <!-- Mode Selector Tabs -->
       <div class="scan-tabs">
         <button type="button" class="scan-tab active" id="tab-webcam-mode">
-          <span>📸 Face ID онлайн</span>
+          <span>📸 Веб-камера</span>
         </button>
         <button type="button" class="scan-tab" id="tab-video-mode">
-          <span>🎬 Селфи-видео (круговой поворот)</span>
+          <span>🎬 Селфи-видео</span>
         </button>
       </div>
 
@@ -373,16 +373,16 @@
       <div class="modal-footer">
         <button type="button" class="btn-modal-secondary" id="btn-scan-cancel">Отмена</button>
         <button type="button" class="btn-modal-instant" id="btn-instant-snapshot" title="Сделать быстрый одиночный снимок лица">
-          <span>📸 Моментальный снимок</span>
+          <span>📸 Быстрый снимок</span>
         </button>
         <button type="button" class="btn-modal-primary" id="btn-start-scan">
-          <span>🔄 Круговой Face ID скан</span>
+          <span>🔄 Круговой скан</span>
         </button>
         <button type="button" class="btn-modal-retake hidden" id="btn-scan-retake">
-          <span>↺ Заново</span>
+          <span>↺ Переснять</span>
         </button>
         <button type="button" class="btn-modal-success hidden" id="btn-apply-scan">
-          <span>✓ Применить скан</span>
+          <span>✓ Использовать снимок</span>
         </button>
       </div>
     </div>

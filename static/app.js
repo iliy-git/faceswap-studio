@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isFaceIdScan) {
       if (multiGridWrap) multiGridWrap.classList.add('hidden');
       if (faceidCardContent) faceidCardContent.classList.remove('hidden');
-      multiPhotoName.textContent = 'Face ID 3D-слепок';
+      multiPhotoName.textContent = 'Снимок лица';
     } else {
       if (faceidCardContent) faceidCardContent.classList.add('hidden');
       if (multiGridWrap) multiGridWrap.classList.remove('hidden');
@@ -311,10 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
     btnGenerate.disabled = !hasPhoto;
 
     if (hasPhoto) {
-      actionNote.textContent = '✓ Лицо готово! Нажмите «Сгенерировать»';
+      actionNote.textContent = '✓ Фото готово! Нажмите «Сгенерировать видео»';
       actionNote.style.color = '#38bdf8';
     } else {
-      actionNote.textContent = 'Загрузите фото лица или сделайте Face ID скан (веб-камера)';
+      actionNote.textContent = 'Загрузите фото лица или сделайте снимок с камеры';
       actionNote.style.color = '';
     }
   }
@@ -552,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await webcamVideo.play();
 
       faceidMainPrompt.textContent = 'Лицо в кадре';
-      faceidSubPrompt.textContent = 'Нажмите «Моментальный снимок» или «Круговой Face ID скан»';
+      faceidSubPrompt.textContent = 'Нажмите «Быстрый снимок» или «Круговой скан»';
       btnStartScan.disabled = false;
       btnStartScan.classList.remove('hidden');
       if (btnInstantSnapshot) btnInstantSnapshot.disabled = false;
@@ -707,8 +707,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (faceidSuccessOverlay) faceidSuccessOverlay.classList.remove('hidden');
     playFaceIdChime();
 
-    faceidMainPrompt.textContent = 'Face ID настроен!';
-    faceidSubPrompt.textContent = '3D-слепок внешности готов к генерации';
+    faceidMainPrompt.textContent = 'Снимок готов!';
+    faceidSubPrompt.textContent = 'Лицо зафиксировано для генерации видео';
 
     btnStartScan.classList.add('hidden');
     btnScanRetake.classList.remove('hidden');
@@ -776,7 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function processSelfieVideoFile(videoFile) {
     if (videoExtractLoading) videoExtractLoading.classList.remove('hidden');
     faceidMainPrompt.textContent = 'Анализ кругового селфи-видео...';
-    faceidSubPrompt.textContent = 'Извлечение 8 объёмных ракурсов лица для Face ID';
+    faceidSubPrompt.textContent = 'Извлечение кадров лица из видео...';
     capturedScanFrames = [];
     if (faceidStrip) faceidStrip.innerHTML = '';
 
@@ -884,7 +884,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     selectedPhotoFiles = scanFiles;
     closeWebcamModal();
-    renderMultiPhotoPreview(scanFiles, '✓ Face ID активен (объёмный 3D-слепок)', true);
+    renderMultiPhotoPreview(scanFiles, '✓ Снимок лица готов', true);
   }
 
   btnApplyScan.addEventListener('click', applyCapturedScan);

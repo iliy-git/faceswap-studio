@@ -1,0 +1,38 @@
+# Models (large binary files > 100MB)
+models/*.onnx
+models/buffalo_l/*.onnx
+models/buffalo_l.zip
+models/models/
+
+# Docker images & archives
+*.tar
+*.tar.gz
+*.zip
+
+# Application state & runtime data
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+*.log
+*.pid
+*.env
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+.pytest_cache/
+
+# SSL certificates
+ssl_cert.pem
+ssl_key.pem
+ssl.cnf
+
+# OS & Editor files
+.DS_Store
+.idea/
+.vscode/

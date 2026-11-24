@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FaceSwap AI — Замена лиц на видео</title>
+  <meta name="description" content="Минималистичный сервис для нейросетевой замены лиц на видео высокой чёткости с естественным сохранением причёски.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css?v=2.4">
+</head>
+<body>
+  <!-- Ambient background glow effects -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <main class="app-layout">
+    <!-- HTTPS Recommendation Banner (shown only on HTTP) -->
+    <div class="https-alert-banner hidden" id="https-alert-banner">
+      <div class="banner-left">
+        <span class="banner-icon">🔒</span>
+        <span class="banner-text">Для работы веб-камеры и Face ID требуется HTTPS.</span>
+      </div>
+      <a href="https://87.232.123.225:7860" class="btn-banner-https" id="btn-banner-https">Перейти на HTTPS ➔</a>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">⚡</span>
+        <h1 class="brand-title">FaceSwap <span>AI</span></h1>
+      </div>
+      <div class="gpu-badge" id="gpu-badge" title="Аппаратное ускорение на GPU">
+        <span class="status-dot"></span>
+        <span class="gpu-text">GTX 1080 • CUDA</span>
+      </div>
+    </header>
+
+    <!-- Subtitle / Instruction -->
+    <div class="hero-desc">
+      <p>Загрузите фото лица и видео, затем нажмите «Сгенерировать»</p>
+    </div>
+
+    <!-- Main Workspace Card -->
+    <div class="studio-card">
+      <!-- Upload Slots: Photo & Video -->
+      <section class="upload-grid" id="upload-section">
+        <!-- Slot 1: Photo -->
+        <div class="upload-slot" id="photo-slot">
+          <div class="slot-header">
+            <span class="slot-number">1</span>
+            <span class="slot-label">Фото лица донора</span>
+          </div>
+
+          <div class="dropzone" id="photo-dropzone">
+            <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" multiple hidden>
+            
+            <!-- Empty state -->
+            <div class="dropzone-empty" id="photo-empty">
+              <div class="icon-wrap">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <p class="dropzone-title">Перетащите <span>фото лица</span></p>
+              <p class="dropzone-hint">или нажмите для выбора одного или нескольких фото</p>
+            </div>
+
+            <!-- Single Photo Preview state -->
+            <div class="dropzone-preview hidden" id="photo-preview-wrap">
+              <img id="photo-preview-img" alt="Превью фото">
+              <div class="file-overlay">
+                <span class="file-name" id="photo-name">photo.jpg</span>
+                <button type="button" class="btn-clear" id="photo-clear-btn" title="Удалить фото">✕</button>
+              </div>
+            </div>
+
+            <!-- Multi-Photo / 3D-Scan Preview state -->
+            <div class="dropzone-multi-preview hidden" id="photo-multi-wrap">
+              <!-- Apple Face ID Credential Card -->
+              <div class="faceid-card-content hidden" id="faceid-card-content">
+                <div class="faceid-card-icon-glow">
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7 3H5a2 2 0 0 0-2 2v2"></path>
+                    <path d="M17 3h2a2 2 0 0 0 2 2v2"></path>
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                    <path d="M3 17v2a2 2 0 0 0 2 2h2"></path>
+                    <circle cx="9" cy="9" r="1.5" fill="#34d399"></circle>
+                    <circle cx="15" cy="9" r="1.5" fill="#34d399"></circle>
+                    <path d="M9 15c1 1.5 5 1.5 6 0"></path>
+                  </svg>
+                </div>
+                <div class="faceid-card-meta">
+                  <div class="faceid-card-title">✓ Face ID 3D-слепок настроен</div>
+                  <div class="faceid-card-subtitle">Круговой объёмный профиль лица (360°) • ArcFace 3D-Fusion</div>
+                </div>
+                <div class="faceid-card-badge">90%+ сходство</div>
+              </div>
+
+              <!-- Multi-Photo Grid (when photos uploaded manually) -->
+              <div class="multi-grid-wrap" id="multi-grid-wrap">
+                <div class="multi-grid-header">
+                  <span class="multi-badge-live">3D Face Scan</span>
+                  <span class="multi-grid-count" id="multi-grid-count">6 ракурсов</span>
+                </div>
+                <div class="multi-grid" id="multi-grid">
+                  <!-- thumbnails will be injected here -->
+                </div>
+              </div>
+
+              <div class="file-overlay">
+                <span class="file-name" id="multi-photo-name">Объёмный 3D-слепок</span>
+                <button type="button" class="btn-clear" id="multi-clear-btn" title="Удалить скан">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Face ID 3D Scan Button Trigger -->
+          <button type="button" class="btn-webcam-trigger" id="btn-open-webcam" title="Настроить Face ID: круговой скан лица для максимального сходства">
+            <span class="webcam-icon-glow">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 3H5a2 2 0 0 0-2 2v2"></path>
+                <path d="M17 3h2a2 2 0 0 0 2 2v2"></path>
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                <path d="M3 17v2a2 2 0 0 0 2 2h2"></path>
+                <circle cx="9" cy="9" r="1"></circle>
+                <circle cx="15" cy="9" r="1"></circle>
+                <path d="M9 15c1 1.5 5 1.5 6 0"></path>
+              </svg>
+            </span>
+            <span class="webcam-text">Сделать Face ID скан (веб-камера)</span>
+            <span class="webcam-badge">Face ID</span>
+          </button>
+        </div>
+
+        <!-- Slot 2: Video -->
+        <div class="upload-slot" id="video-slot">
+          <div class="slot-header">
+            <span class="slot-number">2</span>
+            <span class="slot-label">Целевое видео</span>
+          </div>
+
+          <div class="dropzone" id="video-dropzone">
+            <input type="file" id="video-input" accept="video/mp4,video/quicktime,video/webm" hidden>
+            
+            <!-- Empty state -->
+            <div class="dropzone-empty" id="video-empty">
+              <div class="icon-wrap">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                </svg>
+              </div>
+              <p class="dropzone-title">Перетащите <span>видео</span></p>
+              <p class="dropzone-hint">или нажмите для выбора (MP4, MOV)</p>
+            </div>
+
+            <!-- Preview state -->
+            <div class="dropzone-preview hidden" id="video-preview-wrap">
+              <video id="video-preview-el" muted loop playsinline></video>
+              <div class="file-overlay">
+                <span class="file-name" id="video-name">video.mp4</span>
+                <button type="button" class="btn-clear" id="video-clear-btn" title="Удалить видео">✕</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Neural Pipeline & Speed Settings (Collapsible, Turbo Default) -->
+      <section class="settings-section collapsed" id="settings-section">
+        <div class="settings-header" id="settings-toggle-btn" title="Нажмите, чтобы развернуть или скрыть расширенные настройки">
+          <div class="settings-title-group">
+            <span class="settings-chevron" id="settings-chevron">▶</span>
+            <span class="settings-icon">⚡</span>
+            <span class="settings-title">Настройки нейросетей</span>
+            <span class="settings-active-pill" id="settings-active-pill">⚡ Турбо • Макс. сходство (~15 к/с)</span>
+          </div>
+          <!-- Quick Preset Buttons -->
+          <div class="presets-pill-group" id="presets-pill-group">
+            <button type="button" class="preset-btn active" id="preset-turbo" title="Максимальная скорость рендера (~15 к/с) + максимальное сходство (90%+ Sim)">
+              ⚡ Турбо (~15 к/с)
+            </button>
+            <button type="button" class="preset-btn" id="preset-quality" title="Включает тяжёлые нейросети CodeFormer и оптический поток Farneback (~2.5 к/с)">
+              💎 Кино HD
+            </button>
+          </div>
+        </div>
+
+        <!-- Collapsible Body (Hidden by default) -->
+        <div class="settings-body hidden" id="settings-body">
+          <div class="toggles-grid">
+            <!-- Toggle 1: CodeFormer (Disabled by default for Turbo speed) -->
+            <label class="toggle-card" for="toggle-codeformer">
+              <div class="toggle-info">
+                <span class="toggle-name">CodeFormer HD <span class="toggle-badge-heavy">GPU</span></span>
+                <span class="toggle-desc">Тяжёлая детализация кожи (замедляет в 5 раз)</span>
+              </div>
+              <div class="switch">
+                <input type="checkbox" id="toggle-codeformer">
+                <span class="slider"></span>
+              </div>
+            </label>
+
+            <!-- Toggle 2: BiSeNet (Enabled for clean hair boundary) -->
+            <label class="toggle-card" for="toggle-bisenet">
+              <div class="toggle-info">
+                <span class="toggle-name">BiSeNet Hairline</span>
+                <span class="toggle-desc">Анатомическая маска без шлема и артефактов</span>
+              </div>
+              <div class="switch">
+                <input type="checkbox" id="toggle-bisenet" checked>
+                <span class="slider"></span>
+              </div>
+            </label>
+
+            <!-- Toggle 3: Farneback Optical Flow (Disabled by default) -->
+            <label class="toggle-card" for="toggle-stabilization">
+              <div class="toggle-info">
+                <span class="toggle-name">Стабилизация</span>
+                <span class="toggle-desc">Оптический поток Farneback от мерцаний</span>
+              </div>
+              <div class="switch">
+                <input type="checkbox" id="toggle-stabilization">
+                <span class="slider"></span>
+              </div>
+            </label>
+
+            <!-- Toggle 4: Full Head Hair Transfer -->
+            <label class="toggle-card" for="toggle-donor-hair">
+              <div class="toggle-info">
+                <span class="toggle-name">Волосы донора <span class="toggle-badge-heavy" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">Full Head</span></span>
+                <span class="toggle-desc">Перенос причёски и лба с фото на видео</span>
+              </div>
+              <div class="switch">
+                <input type="checkbox" id="toggle-donor-hair">
+                <span class="slider"></span>
+              </div>
+            </label>
+
+            <!-- Toggle 5: Clean Shave (Remove Mustache) -->
+            <label class="toggle-card" for="toggle-remove-mustache">
+              <div class="toggle-info">
+                <span class="toggle-name">Удалять усы / щетину <span class="toggle-badge-heavy" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">Clean Shave</span></span>
+                <span class="toggle-desc">Очистка носогубной зоны от усов с исходного видео</span>
+              </div>
+              <div class="switch">
+                <input type="checkbox" id="toggle-remove-mustache">
+                <span class="slider"></span>
+              </div>
+            </label>
+
+            <!-- Toggle 6: Ultra Identity (Maximum Donor Resemblance - Enabled by default) -->
+            <label class="toggle-card" for="toggle-ultra-identity">
+              <div class="toggle-info">
+                <span class="toggle-name">Максимальное сходство <span class="toggle-badge-heavy" style="background: rgba(147, 51, 234, 0.2); color: #c084fc; border-color: rgba(147, 51, 234, 0.3);">90%+ Sim</span></span>
+                <span class="toggle-desc">2-проходный swap + сохранение узнаваемости черт донора</span>
+              </div>
+              <div class="switch">
+                <input type="checkbox" id="toggle-ultra-identity" checked>
+                <span class="slider"></span>
+              </div>
+            </label>
+          </div>
+
+          <div class="speed-hint" id="speed-hint">
+            <span class="speed-indicator-dot turbo"></span>
+            <span class="speed-hint-text" id="speed-hint-text">⚡ Режим: Турбо + Максимальное сходство • Скорость ~14–16 к/с</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Generate Action Area -->
+      <section class="action-section" id="action-section">
+        <button type="button" class="btn-generate" id="btn-generate" disabled>
+          <span class="btn-glow"></span>
+          <span class="btn-icon">⚡</span>
+          <span class="btn-text">Сгенерировать</span>
+        </button>
+        <p class="action-note" id="action-note">Выберите фото и видео, чтобы запустить генерацию</p>
+      </section>
+
+      <!-- Processing State -->
+      <section class="progress-section hidden" id="progress-section">
+        <div class="progress-card">
+          <div class="progress-top">
+            <div class="progress-status-box">
+              <div class="pulse-spinner"></div>
+              <span class="progress-status-text" id="progress-status-text">Инициализация нейросетей...</span>
+            </div>
+            <span class="progress-percent" id="progress-percent">0%</span>
+          </div>
+
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progress-bar-fill"></div>
+          </div>
+
+          <div class="metrics-row">
+            <div class="metric-pill">
+              <span class="metric-label">Кадр</span>
+              <span class="metric-val" id="metric-frames">0 / 0</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-label">Скорость</span>
+              <span class="metric-val" id="metric-fps">-- к/с</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-label">Осталось</span>
+              <span class="metric-val" id="metric-eta">-- сек</span>
+            </div>
+          </div>
+
+          <div class="progress-actions">
+            <button type="button" class="btn-cancel-render" id="btn-cancel-render">✕ Отменить генерацию / Сбросить</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Result State -->
+      <section class="result-section hidden" id="result-section">
+        <div class="result-card">
+          <div class="result-badge">
+            <span class="check-icon">✓</span> Видео успешно сгенерировано!
+          </div>
+
+          <div class="result-player-wrapper">
+            <video id="result-player" controls autoplay loop playsinline></video>
+          </div>
+
+          <div class="result-actions">
+            <button type="button" class="btn-download" id="btn-download">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span id="btn-download-text">Скачать результат (MP4)</span>
+            </button>
+
+            <a href="#" target="_blank" class="btn-open-tab" id="btn-open-tab" title="Открыть видео в отдельной вкладке">
+              <span>↗ Открыть видео в отдельной вкладке</span>
+            </a>
+            
+            <button type="button" class="btn-reset" id="btn-reset">
+              ↺ Обработать другое видео
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal: Face ID 3D Biometric Scan -->
+  <div class="modal-backdrop hidden" id="webcam-modal">
+    <div class="modal-card modal-faceid-card">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge faceid-badge-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 3H5a2 2 0 0 0-2 2v2"></path>
+              <path d="M17 3h2a2 2 0 0 0 2 2v2"></path>
+              <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+              <path d="M3 17v2a2 2 0 0 0 2 2h2"></path>
+              <circle cx="9" cy="9" r="1"></circle>
+              <circle cx="15" cy="9" r="1"></circle>
+              <path d="M9 15c1 1.5 5 1.5 6 0"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title">Face ID 3D</h3>
+            <p class="modal-subtitle">Круговое биометрическое сканирование лица</p>
+          </div>
+        </div>
+        <button type="button" class="modal-close-btn" id="modal-close-btn" title="Закрыть">✕</button>
+      </div>
+
+      <!-- Mode Selector Tabs -->
+      <div class="scan-tabs">
+        <button type="button" class="scan-tab active" id="tab-webcam-mode">
+          <span>📸 Face ID онлайн</span>
+        </button>
+        <button type="button" class="scan-tab" id="tab-video-mode">
+          <span>🎬 Селфи-видео (круговой поворот)</span>
+        </button>
+      </div>
+
+      <div class="modal-body faceid-body">
+        <!-- Face ID Interactive Circular Viewport -->
+        <div class="faceid-stage" id="faceid-stage">
+          <!-- Face ID SVG with 40 Radial Ticks -->
+          <svg class="faceid-svg-ring" id="faceid-svg-ring" viewBox="0 0 340 340">
+            <!-- Background Circular Track -->
+            <circle cx="170" cy="170" r="142" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1.5" />
+            <!-- 40 Radial Ticks Group -->
+            <g id="faceid-ticks-group"></g>
+            <!-- Outer Glow Track -->
+            <circle id="faceid-pulse-ring" cx="170" cy="170" r="142" fill="none" stroke="#34d399" stroke-width="3" stroke-dasharray="892" stroke-dashoffset="892" class="faceid-pulse-ring" />
+          </svg>
+
+          <!-- Circular Aperture Clipping Camera View -->
+          <div class="faceid-aperture" id="faceid-aperture">
+            <video id="webcam-video" autoplay playsinline muted></video>
+            <canvas id="webcam-canvas" style="display:none;"></canvas>
+
+            <!-- Holographic Biometric Depth Scanner Overlays -->
+            <div class="faceid-radar-mesh" id="faceid-radar-mesh"></div>
+            <div class="faceid-radar-sweep" id="faceid-radar-sweep"></div>
+            <div class="faceid-scan-line" id="faceid-scan-line"></div>
+            <div class="faceid-biometric-reticle"></div>
+
+            <!-- Face ID Target Brackets (Iconic Viewfinder Corners) -->
+            <div class="faceid-corner top-left"></div>
+            <div class="faceid-corner top-right"></div>
+            <div class="faceid-corner bottom-left"></div>
+            <div class="faceid-corner bottom-right"></div>
+
+            <!-- Face ID Success Checkmark Overlay -->
+            <div class="faceid-success-overlay hidden" id="faceid-success-overlay">
+              <div class="faceid-success-circle">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Video Upload Mode (Alternative) -->
+          <div class="video-scan-viewport hidden" id="video-scan-viewport">
+            <div class="video-scan-empty" id="video-scan-empty">
+              <span class="video-scan-icon">📹</span>
+              <p class="video-scan-title">Запишите или выберите <span>круговое селфи-видео</span></p>
+              <p class="video-scan-desc">Плавно опишите головой круг (2–4 сек) — алгоритм извлечёт все ракурсы для Face ID!</p>
+              <input type="file" id="selfie-video-input" accept="video/*" capture="user" hidden>
+              <button type="button" class="btn-pick-selfie-video" id="btn-pick-selfie-video">Выбрать видео с диска / камеры</button>
+            </div>
+            <div class="video-extract-loading hidden" id="video-extract-loading">
+              <div class="pulse-spinner"></div>
+              <span>Формирование 3D Face ID слепка...</span>
+            </div>
+          </div>
+
+          <!-- Camera Error / HTTP Warning Overlay -->
+          <div class="camera-error-overlay hidden" id="camera-error-overlay">
+            <div class="camera-error-icon">🔒</div>
+            <p class="camera-error-title" id="camera-error-title">Камера заблокирована браузером</p>
+            <p class="camera-error-desc" id="camera-error-desc">
+              Для доступа к веб-камере браузер требует защищенное соединение (HTTPS). Нажмите кнопку ниже для автоматического перехода на HTTPS.
+            </p>
+            <div class="camera-error-actions">
+              <button type="button" class="btn-error-action highlight-https" id="btn-err-switch-https">
+                <span>🔒 Перейти на версию HTTPS (включить камеру)</span>
+              </button>
+              <button type="button" class="btn-error-action primary" id="btn-err-selfie-video">
+                <span>📹 Загрузить селфи-видео (работает без HTTPS!)</span>
+              </button>
+              <input type="file" id="scan-fallback-photos-input" accept="image/*" multiple hidden>
+              <button type="button" class="btn-error-action" id="btn-err-photos">
+                <span>📁 Выбрать несколько фото лица с устройства</span>
+              </button>
+              <button type="button" class="btn-error-action secondary" id="btn-toggle-chrome-guide">
+                <span>⚙ Как разрешить камеру в Chrome без HTTPS</span>
+              </button>
+            </div>
+            <div class="chrome-guide-box hidden" id="chrome-guide-box">
+              <div class="chrome-guide-step">
+                <span>1. Откройте в Chrome:</span>
+                <div class="code-row">
+                  <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>
+                  <button type="button" class="btn-copy-code" id="btn-copy-flag">Копировать</button>
+                </div>
+              </div>
+              <div class="chrome-guide-step">
+                <span>2. Добавьте адрес сайта:</span>
+                <div class="code-row">
+                  <code id="code-site-url">http://87.232.123.225:7860</code>
+                  <button type="button" class="btn-copy-code" id="btn-copy-url">Копировать</button>
+                </div>
+              </div>
+              <div class="chrome-guide-step">
+                <span>3. Выберите <b>Enabled</b> и нажмите <b>Relaunch</b>.</span>
+              </div>
+            </div>
+            <div class="camera-error-footer-btns">
+              <button type="button" class="btn-retry-cam" id="btn-retry-cam">↻ Повторить попытку</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Face ID Instructions HUD below the circle -->
+        <div class="faceid-instructions">
+          <h4 class="faceid-main-prompt" id="faceid-main-prompt">Вращайте головой, чтобы заполнить круг</h4>
+          <p class="faceid-sub-prompt" id="faceid-sub-prompt">Удерживайте лицо в круге и плавно опишите головой круговое движение</p>
+          <div class="faceid-progress-badge">
+            <span class="faceid-progress-dot"></span>
+            <span class="faceid-progress-text" id="faceid-progress-text">Круговой скан: 0%</span>
+          </div>
+        </div>
+
+        <!-- Biometric Sensor & Fusion Status Pill Bar (Apple style, no photo thumbs) -->
+        <div class="faceid-sensor-status" id="faceid-sensor-status">
+          <span class="sensor-pill active">● TrueDepth 3D</span>
+          <span class="sensor-pill" id="sensor-angles-pill">Слепок: 0 / 8 ракурсов</span>
+          <span class="sensor-pill">ArcFace 3D-Fusion</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-modal-secondary" id="btn-scan-cancel">Отмена</button>
+        <button type="button" class="btn-modal-primary" id="btn-start-scan">
+          <span>▶ Начать сканирование Face ID</span>
+        </button>
+        <button type="button" class="btn-modal-retake hidden" id="btn-scan-retake">
+          <span>🔄 Сканировать заново</span>
+        </button>
+        <button type="button" class="btn-modal-success hidden" id="btn-apply-scan">
+          <span>✓ Использовать Face ID</span>
+        </button>
+      </div>
+    </div>
+  </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js?v=2.4"></script>
+</body>
+</html>

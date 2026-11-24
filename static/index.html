@@ -31,15 +31,15 @@
         <span class="brand-icon">⚡</span>
         <h1 class="brand-title">FaceSwap <span>AI</span></h1>
       </div>
-      <div class="gpu-badge" id="gpu-badge" title="Аппаратное ускорение на GPU">
-        <span class="status-dot"></span>
-        <span class="gpu-text">GTX 1080 • CUDA</span>
+      <div class="gpu-badge" id="gpu-badge" title="Активный графический ускоритель">
+        <span class="status-dot" id="gpu-status-dot"></span>
+        <span class="gpu-text" id="gpu-badge-text">Определение GPU...</span>
       </div>
     </header>
 
     <!-- Subtitle / Instruction -->
     <div class="hero-desc">
-      <p>Загрузите фото лица и видео, затем нажмите «Сгенерировать»</p>
+      <p>Сделайте скан лица через веб-камеру или загрузите фото, затем нажмите «Сгенерировать»</p>
     </div>
 
     <!-- Main Workspace Card -->
@@ -159,109 +159,6 @@
         </div>
       </section>
 
-      <!-- Neural Pipeline & Speed Settings (Collapsible, Turbo Default) -->
-      <section class="settings-section collapsed" id="settings-section">
-        <div class="settings-header" id="settings-toggle-btn" title="Нажмите, чтобы развернуть или скрыть расширенные настройки">
-          <div class="settings-title-group">
-            <span class="settings-chevron" id="settings-chevron">▶</span>
-            <span class="settings-icon">⚡</span>
-            <span class="settings-title">Настройки нейросетей</span>
-            <span class="settings-active-pill" id="settings-active-pill">⚡ Турбо • Макс. сходство (~15 к/с)</span>
-          </div>
-          <!-- Quick Preset Buttons -->
-          <div class="presets-pill-group" id="presets-pill-group">
-            <button type="button" class="preset-btn active" id="preset-turbo" title="Максимальная скорость рендера (~15 к/с) + максимальное сходство (90%+ Sim)">
-              ⚡ Турбо (~15 к/с)
-            </button>
-            <button type="button" class="preset-btn" id="preset-quality" title="Включает тяжёлые нейросети CodeFormer и оптический поток Farneback (~2.5 к/с)">
-              💎 Кино HD
-            </button>
-          </div>
-        </div>
-
-        <!-- Collapsible Body (Hidden by default) -->
-        <div class="settings-body hidden" id="settings-body">
-          <div class="toggles-grid">
-            <!-- Toggle 1: CodeFormer (Disabled by default for Turbo speed) -->
-            <label class="toggle-card" for="toggle-codeformer">
-              <div class="toggle-info">
-                <span class="toggle-name">CodeFormer HD <span class="toggle-badge-heavy">GPU</span></span>
-                <span class="toggle-desc">Тяжёлая детализация кожи (замедляет в 5 раз)</span>
-              </div>
-              <div class="switch">
-                <input type="checkbox" id="toggle-codeformer">
-                <span class="slider"></span>
-              </div>
-            </label>
-
-            <!-- Toggle 2: BiSeNet (Enabled for clean hair boundary) -->
-            <label class="toggle-card" for="toggle-bisenet">
-              <div class="toggle-info">
-                <span class="toggle-name">BiSeNet Hairline</span>
-                <span class="toggle-desc">Анатомическая маска без шлема и артефактов</span>
-              </div>
-              <div class="switch">
-                <input type="checkbox" id="toggle-bisenet" checked>
-                <span class="slider"></span>
-              </div>
-            </label>
-
-            <!-- Toggle 3: Farneback Optical Flow (Disabled by default) -->
-            <label class="toggle-card" for="toggle-stabilization">
-              <div class="toggle-info">
-                <span class="toggle-name">Стабилизация</span>
-                <span class="toggle-desc">Оптический поток Farneback от мерцаний</span>
-              </div>
-              <div class="switch">
-                <input type="checkbox" id="toggle-stabilization">
-                <span class="slider"></span>
-              </div>
-            </label>
-
-            <!-- Toggle 4: Full Head Hair Transfer -->
-            <label class="toggle-card" for="toggle-donor-hair">
-              <div class="toggle-info">
-                <span class="toggle-name">Волосы донора <span class="toggle-badge-heavy" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.3);">Full Head</span></span>
-                <span class="toggle-desc">Перенос причёски и лба с фото на видео</span>
-              </div>
-              <div class="switch">
-                <input type="checkbox" id="toggle-donor-hair">
-                <span class="slider"></span>
-              </div>
-            </label>
-
-            <!-- Toggle 5: Clean Shave (Remove Mustache) -->
-            <label class="toggle-card" for="toggle-remove-mustache">
-              <div class="toggle-info">
-                <span class="toggle-name">Удалять усы / щетину <span class="toggle-badge-heavy" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border-color: rgba(245, 158, 11, 0.3);">Clean Shave</span></span>
-                <span class="toggle-desc">Очистка носогубной зоны от усов с исходного видео</span>
-              </div>
-              <div class="switch">
-                <input type="checkbox" id="toggle-remove-mustache">
-                <span class="slider"></span>
-              </div>
-            </label>
-
-            <!-- Toggle 6: Ultra Identity (Maximum Donor Resemblance - Enabled by default) -->
-            <label class="toggle-card" for="toggle-ultra-identity">
-              <div class="toggle-info">
-                <span class="toggle-name">Максимальное сходство <span class="toggle-badge-heavy" style="background: rgba(147, 51, 234, 0.2); color: #c084fc; border-color: rgba(147, 51, 234, 0.3);">90%+ Sim</span></span>
-                <span class="toggle-desc">2-проходный swap + сохранение узнаваемости черт донора</span>
-              </div>
-              <div class="switch">
-                <input type="checkbox" id="toggle-ultra-identity" checked>
-                <span class="slider"></span>
-              </div>
-            </label>
-          </div>
-
-          <div class="speed-hint" id="speed-hint">
-            <span class="speed-indicator-dot turbo"></span>
-            <span class="speed-hint-text" id="speed-hint-text">⚡ Режим: Турбо + Максимальное сходство • Скорость ~14–16 к/с</span>
-          </div>
-        </div>
-      </section>
-
       <!-- Generate Action Area -->
       <section class="action-section" id="action-section">
         <button type="button" class="btn-generate" id="btn-generate" disabled>
@@ -269,7 +166,7 @@
           <span class="btn-icon">⚡</span>
           <span class="btn-text">Сгенерировать</span>
         </button>
-        <p class="action-note" id="action-note">Выберите фото и видео, чтобы запустить генерацию</p>
+        <p class="action-note" id="action-note">Загрузите фото лица или сделайте скан лица (веб-камера)</p>
       </section>
 
       <!-- Processing State -->
@@ -498,21 +395,22 @@
 
       <div class="modal-footer">
         <button type="button" class="btn-modal-secondary" id="btn-scan-cancel">Отмена</button>
+        <button type="button" class="btn-modal-instant" id="btn-instant-snapshot" title="Сделать быстрый одиночный снимок лица">
+          <span>📸 Моментальный снимок</span>
+        </button>
         <button type="button" class="btn-modal-primary" id="btn-start-scan">
-          <span>▶ Начать сканирование Face ID</span>
+          <span>🔄 Круговой Face ID скан</span>
         </button>
         <button type="button" class="btn-modal-retake hidden" id="btn-scan-retake">
-          <span>🔄 Сканировать заново</span>
+          <span>↺ Заново</span>
         </button>
         <button type="button" class="btn-modal-success hidden" id="btn-apply-scan">
-          <span>✓ Использовать Face ID</span>
+          <span>✓ Применить скан</span>
         </button>
       </div>
     </div>
   </div>
-    </div>
-  </div>
 
-  <script src="/static/app.js?v=2.4"></script>
+  <script src="/static/app.js?v=2.5"></script>
 </body>
 </html>

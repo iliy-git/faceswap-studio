@@ -32,21 +32,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnGenerate = document.getElementById('btn-generate');
   const actionNote = document.getElementById('action-note');
 
-  // Elements: Settings & Toggles
-  const settingsToggleBtn = document.getElementById('settings-toggle-btn');
-  const settingsBody = document.getElementById('settings-body');
-  const settingsChevron = document.getElementById('settings-chevron');
-  const settingsActivePill = document.getElementById('settings-active-pill');
-  const toggleCodeformer = document.getElementById('toggle-codeformer');
-  const toggleBisenet = document.getElementById('toggle-bisenet');
-  const toggleStabilization = document.getElementById('toggle-stabilization');
-  const toggleDonorHair = document.getElementById('toggle-donor-hair');
-  const toggleRemoveMustache = document.getElementById('toggle-remove-mustache');
-  const toggleUltraIdentity = document.getElementById('toggle-ultra-identity');
-  const presetTurbo = document.getElementById('preset-turbo');
-  const presetQuality = document.getElementById('preset-quality');
-  const speedHintText = document.getElementById('speed-hint-text');
-  const speedIndicatorDot = document.querySelector('.speed-indicator-dot');
+  // GPU Badge Live Info
+  const gpuBadgeText = document.getElementById('gpu-badge-text');
+  const gpuBadge = document.getElementById('gpu-badge');
+
+  async function fetchGpuInfo() {
+    try {
+      const res = await fetch('/api/gpu_info');
+      if (res.ok) {
+        const data = await res.json();
+        if (gpuBadgeText && data.badge_text) {
+          gpuBadgeText.textContent = data.badge_text;
+        }
+        if (gpuBadge) {
+          if (data.is_gpu_active) {
+            gpuBadge.classList.remove('cpu');
+          } else {
+            gpuBadge.classList.add('cpu');
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('GPU info error:', e);
+    }
+  }
+  fetchGpuInfo();
 
   // Elements: Progress
   const progressSection = document.getElementById('progress-section');
@@ -88,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnScanCancel = document.getElementById('btn-scan-cancel');
   const btnScanRetake = document.getElementById('btn-scan-retake');
   const btnApplyScan = document.getElementById('btn-apply-scan');
+  const btnInstantSnapshot = document.getElementById('btn-instant-snapshot');
   const faceidCardContent = document.getElementById('faceid-card-content');
   const multiGridWrap = document.getElementById('multi-grid-wrap');
   const btnErrSwitchHttps = document.getElementById('btn-err-switch-https');
@@ -146,103 +157,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Settings Collapsible Accordion Logic
-  if (settingsToggleBtn && settingsBody && settingsSection) {
-    settingsToggleBtn.addEventListener('click', (e) => {
-      // Don't toggle when clicking the preset buttons inside the header
-      if (e.target.closest('#presets-pill-group') || e.target.closest('.preset-btn')) return;
-      const isHidden = settingsBody.classList.contains('hidden');
-      if (isHidden) {
-        settingsBody.classList.remove('hidden');
-        settingsSection.classList.remove('collapsed');
-      } else {
-        settingsBody.classList.add('hidden');
-        settingsSection.classList.add('collapsed');
-      }
-    });
-  }
-
-  // Settings & Speed Presets Logic
-  function updateSpeedHint() {
-    const cf = toggleCodeformer ? toggleCodeformer.checked : false;
-    const bis = toggleBisenet ? toggleBisenet.checked : true;
-    const stab = toggleStabilization ? toggleStabilization.checked : false;
-    const hair = toggleDonorHair ? toggleDonorHair.checked : false;
-    const ultra = toggleUltraIdentity ? toggleUltraIdentity.checked : true;
-
-    if (hair) {
-      if (speedHintText) speedHintText.textContent = '💇 Режим Full Head: замена лица + причёски донора • Скорость ~8–10 к/с';
-      if (speedIndicatorDot) speedIndicatorDot.className = 'speed-indicator-dot';
-      if (settingsActivePill) {
-        settingsActivePill.textContent = '💇 Full Head • Волосы (~8–10 к/с)';
-        settingsActivePill.style.color = '#34d399';
-        settingsActivePill.style.borderColor = 'rgba(52, 211, 153, 0.3)';
-      }
-    } else if (!cf && !stab && ultra) {
-      if (speedHintText) speedHintText.textContent = '⚡ Режим: Турбо + Максимальное сходство (90%+ Sim) • Скорость ~14–16 к/с';
-      if (speedIndicatorDot) speedIndicatorDot.className = 'speed-indicator-dot turbo';
-      if (settingsActivePill) {
-        settingsActivePill.textContent = '⚡ Турбо • Макс. сходство (~15 к/с)';
-        settingsActivePill.style.color = '#38bdf8';
-        settingsActivePill.style.borderColor = 'rgba(56, 189, 248, 0.3)';
-      }
-    } else if (!cf && !stab) {
-      if (speedHintText) speedHintText.textContent = '⚡ Режим: Турбо • Скорость ~15–18 к/с (мгновенный рендер)';
-      if (speedIndicatorDot) speedIndicatorDot.className = 'speed-indicator-dot turbo';
-      if (settingsActivePill) {
-        settingsActivePill.textContent = '⚡ Турбо • Быстрый рендер (~18 к/с)';
-        settingsActivePill.style.color = '#38bdf8';
-        settingsActivePill.style.borderColor = 'rgba(56, 189, 248, 0.3)';
-      }
-    } else {
-      if (speedHintText) speedHintText.textContent = '💎 Режим максимального качества • Скорость ~2.5 к/с (детализация пор)';
-      if (speedIndicatorDot) speedIndicatorDot.className = 'speed-indicator-dot';
-      if (settingsActivePill) {
-        settingsActivePill.textContent = '💎 Кино HD • Детализация кожи (~2.5 к/с)';
-        settingsActivePill.style.color = '#c084fc';
-        settingsActivePill.style.borderColor = 'rgba(192, 132, 252, 0.3)';
-      }
+  // Helper: Convert base64 dataURL to Blob
+  function dataURLtoBlob(dataurl) {
+    if (!dataurl || typeof dataurl !== 'string') return new Blob([], { type: 'image/jpeg' });
+    const arr = dataurl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
     }
-
-    if (presetTurbo && presetQuality) {
-      if (!cf && !stab && !hair) {
-        presetTurbo.classList.add('active');
-        presetQuality.classList.remove('active');
-      } else if (cf && bis && stab && !hair) {
-        presetQuality.classList.add('active');
-        presetTurbo.classList.remove('active');
-      } else {
-        presetQuality.classList.remove('active');
-        presetTurbo.classList.remove('active');
-      }
-    }
+    return new Blob([u8arr], { type: mime });
   }
 
-  if (presetTurbo) {
-    presetTurbo.addEventListener('click', () => {
-      if (toggleCodeformer) toggleCodeformer.checked = false;
-      if (toggleStabilization) toggleStabilization.checked = false;
-      if (toggleBisenet) toggleBisenet.checked = true;
-      if (toggleUltraIdentity) toggleUltraIdentity.checked = true;
-      if (toggleDonorHair) toggleDonorHair.checked = false;
-      updateSpeedHint();
-    });
+  function renderSinglePhotoPreview(file, dataUrl) {
+    photoName.textContent = file.name || 'webcam_face.jpg';
+    photoPreviewImg.src = dataUrl;
+    photoEmpty.classList.add('hidden');
+    photoMultiWrap.classList.add('hidden');
+    photoPreviewWrap.classList.remove('hidden');
+    photoDropzone.classList.add('has-file');
+    updateGenerateButtonState();
   }
-
-  if (presetQuality) {
-    presetQuality.addEventListener('click', () => {
-      if (toggleCodeformer) toggleCodeformer.checked = true;
-      if (toggleBisenet) toggleBisenet.checked = true;
-      if (toggleStabilization) toggleStabilization.checked = true;
-      if (toggleUltraIdentity) toggleUltraIdentity.checked = true;
-      updateSpeedHint();
-    });
-  }
-
-  [toggleCodeformer, toggleBisenet, toggleStabilization, toggleDonorHair].forEach(el => {
-    if (el) el.addEventListener('change', updateSpeedHint);
-  });
-  updateSpeedHint();
 
   // 1. Photo Slot Logic (Files & Multi-Files)
   photoDropzone.addEventListener('click', (e) => {
@@ -271,15 +209,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (files.length === 1) {
       // Single Photo Mode
       const file = files[0];
-      photoName.textContent = file.name;
       const reader = new FileReader();
       reader.onload = (e) => {
-        photoPreviewImg.src = e.target.result;
-        photoEmpty.classList.add('hidden');
-        photoMultiWrap.classList.add('hidden');
-        photoPreviewWrap.classList.remove('hidden');
-        photoDropzone.classList.add('has-file');
-        updateGenerateButtonState();
+        renderSinglePhotoPreview(file, e.target.result);
       };
       reader.readAsDataURL(file);
     } else {
@@ -644,7 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function initCamera() {
     cameraErrorOverlay.classList.add('hidden');
-    faceidMainPrompt.textContent = 'Вращайте головой, чтобы заполнить круг';
+    faceidMainPrompt.textContent = 'Вращайте головой или сделайте снимок';
     faceidSubPrompt.textContent = 'Подключение к веб-камере...';
 
     try {
@@ -656,22 +588,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      webcamStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user'
-        },
-        audio: false
-      });
+      let stream = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'user'
+          },
+          audio: false
+        });
+      } catch (constraintErr) {
+        console.warn('Overconstrained camera, trying basic video: true', constraintErr);
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false
+        });
+      }
 
+      webcamStream = stream;
       webcamVideo.srcObject = webcamStream;
       await webcamVideo.play();
 
-      faceidMainPrompt.textContent = 'Вращайте головой, чтобы заполнить круг';
-      faceidSubPrompt.textContent = 'Удерживайте лицо в круге и нажмите «Начать сканирование Face ID»';
+      faceidMainPrompt.textContent = 'Лицо в кадре';
+      faceidSubPrompt.textContent = 'Нажмите «Моментальный снимок» или «Круговой Face ID скан»';
       btnStartScan.disabled = false;
       btnStartScan.classList.remove('hidden');
+      if (btnInstantSnapshot) btnInstantSnapshot.disabled = false;
     } catch (err) {
       console.warn('Camera error:', err);
       cameraErrorOverlay.classList.remove('hidden');
@@ -688,6 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnErrSwitchHttps) btnErrSwitchHttps.classList.add('hidden');
       }
       btnStartScan.disabled = true;
+      if (btnInstantSnapshot) btnInstantSnapshot.disabled = true;
     }
   }
 
@@ -823,11 +767,18 @@ document.addEventListener('DOMContentLoaded', () => {
     playFaceIdChime();
 
     faceidMainPrompt.textContent = 'Face ID настроен!';
-    faceidSubPrompt.textContent = '3D-слепок внешности готов к генерации с максимальным сходством';
+    faceidSubPrompt.textContent = '3D-слепок внешности готов к генерации';
 
     btnStartScan.classList.add('hidden');
     btnScanRetake.classList.remove('hidden');
     btnApplyScan.classList.remove('hidden');
+
+    // Auto-apply after 800ms so the user doesn't have to manually hunt for the apply button
+    setTimeout(() => {
+      if (capturedScanFrames.length > 0 && !webcamModal.classList.contains('hidden')) {
+        applyCapturedScan();
+      }
+    }, 800);
   }
 
   function addFaceIdThumbnail(frameData) {
@@ -860,14 +811,22 @@ document.addEventListener('DOMContentLoaded', () => {
       webcamCanvas.height = vh;
       const ctx = webcamCanvas.getContext('2d');
 
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       // Video is mirrored for user preview, so mirror canvas to match user perspective
       ctx.translate(vw, 0);
       ctx.scale(-1, 1);
       ctx.drawImage(webcamVideo, 0, 0, vw, vh);
+      ctx.restore();
 
+      const dataUrl = webcamCanvas.toDataURL('image/jpeg', 0.95);
       webcamCanvas.toBlob((blob) => {
-        const dataUrl = webcamCanvas.toDataURL('image/jpeg', 0.95);
-        resolve({ blob, dataUrl });
+        if (!blob || blob.size === 0) {
+          const fallbackBlob = dataURLtoBlob(dataUrl);
+          resolve({ blob: fallbackBlob, dataUrl });
+        } else {
+          resolve({ blob, dataUrl });
+        }
       }, 'image/jpeg', 0.95);
     });
   }
@@ -967,12 +926,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  btnApplyScan.addEventListener('click', () => {
+  function applyCapturedScan() {
     if (capturedScanFrames.length === 0) return;
 
-    // Convert captured blobs into File objects
+    // Convert captured blobs into File objects with fallback to dataUrl
     const scanFiles = capturedScanFrames.map((item, idx) => {
-      return new File([item.blob], item.filename || `faceid_angle_${idx}.jpg`, {
+      let b = item.blob;
+      if (!b || !(b instanceof Blob) || b.size === 0) {
+        b = dataURLtoBlob(item.dataUrl);
+      }
+      return new File([b], item.filename || `faceid_angle_${idx}.jpg`, {
         type: 'image/jpeg',
         lastModified: Date.now()
       });
@@ -981,7 +944,33 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedPhotoFiles = scanFiles;
     closeWebcamModal();
     renderMultiPhotoPreview(scanFiles, '✓ Face ID активен (объёмный 3D-слепок)', true);
-  });
+  }
+
+  btnApplyScan.addEventListener('click', applyCapturedScan);
+
+  // 1-Click Instant Snapshot Handler
+  if (btnInstantSnapshot) {
+    btnInstantSnapshot.addEventListener('click', async () => {
+      if (!webcamStream || webcamVideo.readyState < 2) {
+        alert('Подождите секунду, камера подключается...');
+        return;
+      }
+      faceidMainPrompt.textContent = 'Снимок готов!';
+      faceidSubPrompt.textContent = 'Применяем фото...';
+      const frameData = await captureWebcamFrame();
+      let blob = frameData.blob;
+      if (!blob || !(blob instanceof Blob) || blob.size === 0) {
+        blob = dataURLtoBlob(frameData.dataUrl);
+      }
+      const file = new File([blob], 'webcam_face.jpg', {
+        type: 'image/jpeg',
+        lastModified: Date.now()
+      });
+      selectedPhotoFiles = [file];
+      closeWebcamModal();
+      renderSinglePhotoPreview(file, frameData.dataUrl);
+    });
+  }
 
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -998,10 +987,6 @@ document.addEventListener('DOMContentLoaded', () => {
     actionSection.classList.add('hidden');
     uploadSection.style.opacity = '0.5';
     uploadSection.style.pointerEvents = 'none';
-    if (settingsSection) {
-      settingsSection.style.opacity = '0.5';
-      settingsSection.style.pointerEvents = 'none';
-    }
 
     progressSection.classList.remove('hidden');
     resultSection.classList.add('hidden');
@@ -1017,12 +1002,12 @@ document.addEventListener('DOMContentLoaded', () => {
       formData.append('video_mode', 'upload');
       formData.append('use_preset_donor', 'false');
       formData.append('hd_mode', 'vfx_head');
-      formData.append('enable_codeformer', toggleCodeformer ? String(toggleCodeformer.checked) : 'false');
-      formData.append('enable_bisenet', toggleBisenet ? String(toggleBisenet.checked) : 'true');
-      formData.append('enable_stabilization', toggleStabilization ? String(toggleStabilization.checked) : 'false');
-      formData.append('transfer_donor_hair', toggleDonorHair ? String(toggleDonorHair.checked) : 'false');
-      formData.append('remove_mustache', toggleRemoveMustache ? String(toggleRemoveMustache.checked) : 'false');
-      formData.append('ultra_identity', toggleUltraIdentity ? String(toggleUltraIdentity.checked) : 'true');
+      formData.append('enable_codeformer', 'false');
+      formData.append('enable_bisenet', 'true');
+      formData.append('enable_stabilization', 'false');
+      formData.append('transfer_donor_hair', 'false');
+      formData.append('remove_mustache', 'false');
+      formData.append('ultra_identity', 'true');
 
       // Append all donor photos (single photo or multi-angle 3D scan)
       selectedPhotoFiles.forEach((file) => {

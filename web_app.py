@@ -790,6 +790,56 @@ async def index():
     return FileResponse(index_file, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
 
 
+@app.get("/api/gpu_info")
+async def get_gpu_info():
+    """Возвращает информацию о текущем GPU-ускорителе для динамического бейджа в интерфейсе."""
+    gpu_name = "CPU / Не обнаружен"
+    vram = ""
+    has_cuda = False
+    has_tensorrt = False
+
+    try:
+        import onnxruntime as ort
+        providers = ort.get_available_providers()
+        has_tensorrt = "TensorrtExecutionProvider" in providers
+        has_cuda = "CUDAExecutionProvider" in providers
+    except Exception:
+        pass
+
+    try:
+        res = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=2
+        )
+        if res.returncode == 0 and res.stdout.strip():
+            line = res.stdout.strip().split("\n")[0]
+            parts = [p.strip() for p in line.split(",")]
+            gpu_name = parts[0]
+            if len(parts) > 1:
+                mem_mb = int(parts[1])
+                mem_gb = round(mem_mb / 1024)
+                vram = f"{mem_gb} GB"
+    except Exception:
+        pass
+
+    is_rtx_or_tensor = any(k in gpu_name for k in ["RTX", "V100", "A100", "H100", "A10", "A6000", "4090", "4080", "3090", "3080"])
+    if is_rtx_or_tensor:
+        tech = "Tensor Cores"
+    elif has_cuda or "GeForce" in gpu_name or "NVIDIA" in gpu_name:
+        tech = "CUDA"
+    else:
+        tech = "CPU"
+
+    badge_text = f"{gpu_name} ({vram}) • {tech}" if vram else f"{gpu_name} • {tech}"
+    return JSONResponse({
+        "gpu_name": gpu_name,
+        "vram": vram,
+        "technology": tech,
+        "badge_text": badge_text,
+        "is_gpu_active": bool(has_cuda or ("GeForce" in gpu_name or "RTX" in gpu_name or "NVIDIA" in gpu_name))
+    })
+
+
 @app.post("/api/start_render")
 async def start_render(
     background_tasks: BackgroundTasks,
@@ -822,10 +872,12 @@ async def start_render(
             raise HTTPException(status_code=400, detail="Тестовое фото p.jpg не найдено.")
     elif donor_photos:
         for idx, file in enumerate(donor_photos):
-            if file.filename:
-                target_p = job_dir / f"donor_{idx}_{file.filename}"
-                with open(target_p, "wb") as buffer:
-                    shutil.copyfileobj(file.file, buffer)
+            fname = file.filename.strip() if (file.filename and file.filename.strip()) else f"face_scan_{idx}.jpg"
+            safe_fname = os.path.basename(fname).replace("/", "_").replace("\\", "_")
+            target_p = job_dir / f"donor_{idx}_{safe_fname}"
+            with open(target_p, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            if target_p.stat().st_size > 0:
                 donor_paths.append(str(target_p))
 
     if not donor_paths:
